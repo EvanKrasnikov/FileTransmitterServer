@@ -4,6 +4,7 @@ import auth.ClientHandler;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.channels.ServerSocketChannel;
 import java.util.List;
 
 class SyncFiles implements Runnable {
@@ -11,9 +12,10 @@ class SyncFiles implements Runnable {
     private List<File> files;
     //ObjectInputStream in;
     //ObjectOutputStream out;
+    private ServerSocketChannel channel;
 
-    SyncFiles(Socket socket, List<File> files) {
-        this.socket = socket;
+    SyncFiles(ServerSocketChannel channel, List<File> files) {
+        this.channel = channel;
         this.files = files;
     }
 
