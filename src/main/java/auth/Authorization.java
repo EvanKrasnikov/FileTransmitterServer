@@ -49,38 +49,56 @@ class Authorization{
         return false;
     }
 
-    void registerUser() throws SQLException, IOException, ClassNotFoundException{ // Регистрация пользователя
-        connectToDB();
+    void registerUser(){ // Регистрация пользователя
+        try {
+            connectToDB();
 
-        if (!isExist()) {
-            statement = connection.prepareStatement("INSERT INTO users (login, pass) VALUES (?,?)");
-            statement.setString(1,login);
-            statement.setString(2,pass);
-            createFolder();
-            msg.sendMessage("/registrationok");
-            //setisAUthorizationOK = true;
-        } else {
-            msg.sendMessage("/loginisoccupied");
+            if (!isExist()) {
+                statement = connection.prepareStatement("INSERT INTO users (login, pass) VALUES (?,?)");
+                statement.setString(1,login);
+                statement.setString(2,pass);
+                createFolder();
+                msg.sendMessage("/registrationok");
+                //setisAUthorizationOK = true;
+            } else {
+                msg.sendMessage("/loginisoccupied");
+            }
+
+
+        } catch (ClassNotFoundException | SQLException | IOException e){
+            e.printStackTrace();
+        } finally {
+            try {
+                disconnectWithDB();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-
-        disconnectWithDB();
     }
 
-    void loginValidation() throws SQLException, IOException, ClassNotFoundException{ // Checking if login is valid
-        connectToDB();
+    void loginValidation(){ // Checking if login is valid
+        try {
+            connectToDB();
 
-        statement = connection.prepareStatement("SELECT login, pass FROM users where login = ?");
-        statement.setString(1,login);
-        ResultSet result = statement.executeQuery();
+            statement = connection.prepareStatement("SELECT login, pass FROM users where login = ?");
+            statement.setString(1,login);
+            ResultSet result = statement.executeQuery();
 
-        if ((!result.getString(1).equals(login)) || (!result.getString(2).equals(pass))){  // проверка правильности логина и пароля
-            msg.sendMessage("/incorrectpass");
-        } else {
-            msg.sendMessage("/incorrectpass");
-            //isAUthorizationOK = true;
+            if ((!result.getString(1).equals(login)) || (!result.getString(2).equals(pass))){  // проверка правильности логина и пароля
+                msg.sendMessage("/incorrectpass");
+            } else {
+                msg.sendMessage("/incorrectpass");
+                //isAUthorizationOK = true;
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                disconnectWithDB();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-
-        disconnectWithDB();
     }
 
     private void createFolder() throws IOException{
