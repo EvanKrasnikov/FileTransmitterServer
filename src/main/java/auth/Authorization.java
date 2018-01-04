@@ -1,27 +1,19 @@
 package auth;
 
-import auth.ClientHandler;
+import speaker.Message;
+import storage.Storage;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.sql.*;
 
-class Authorization extends ClientHandler{
+class Authorization{
     private Connection connection;
     private PreparedStatement statement;
-    private String url = "C:/TMP/DB/database.db";
-    private String port = "5050";
+    private final String DATABASE_PATH = "C:/TMP/DB/database.db";
+    private final String PORT = "5050";
     private String login;
     private String pass;
-    private String storagePath = "C:/tmp/";
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
-    //private Socket socket;
-    //private ServerSocket server;
+    private Message msg = new Message();
 
 
     public void setLogin(String login) {
@@ -32,101 +24,66 @@ class Authorization extends ClientHandler{
         this.pass = pass;
     }
 
-    Authorization(Socket socket, ServerSocket server){
-        super(socket, server);
-        //this.socket = socket;
-        //this.server = server;
+    private void connectToDB() throws ClassNotFoundException, SQLException{ // Подключение к базе данных
+        Class.forName("org.sqlite.JDBC");
+        System.out.println("SQL driver loaded");
+
+        connection = DriverManager.getConnection("jdbc:sqlite:" + DATABASE_PATH + ":" + PORT);
+        System.out.println("Connection to the database established");
     }
 
-    private void connectToDB(){
-        try {
-            Class.forName("org.sqlite.JDBC");
-            System.out.println("SQL driver loaded");
-
-            connection = DriverManager.getConnection("jdbc:sqlite:" + url + ":" + port);
-            System.out.println("Connection to the database established");
-
-            in = new ObjectInputStream(socket.getInputStream());
-            out = new ObjectOutputStream(socket.getOutputStream());
-        } catch (ClassNotFoundException | SQLException | IOException e) {
-            e.printStackTrace();
-        }
+    private void disconnectWithDB() throws SQLException{ // Отключение от базы данных
+        statement.close();
+        connection.close();
     }
 
-    private void disconnectWithDB(){
-        try {
-            statement.close();
-            connection.close();
-        } catch (SQLException e) {
-            System.out.println("Can not close the database");
-        }
-    }
+    private boolean isExist() throws SQLException, IOException{   // Проверка существования пользователя
+        statement = connection.prepareStatement("SELECT count(*) FROM users where login = ?");
+        statement.setString(1,login);
+        ResultSet result = statement.executeQuery();
 
-    private boolean isExist(){
-        try {
-            statement = connection.prepareStatement("SELECT count(*) FROM users where login = ?");  // Проверка существования пользователя
-            statement.setString(1,login);
-            ResultSet result = statement.executeQuery();
+        if (result.getString(1).equals("0")) {
+            msg.sendMessage("/nosuchuser");
+        } else return true;
 
-            if (result.getString(1).equals("0")) {
-                out.writeUTF("/nosuchuser");
-            } else return true;
-
-        } catch (SQLException | IOException e) {
-            e.printStackTrace();
-        }
         return false;
     }
 
-    void registerUser(){
+    void registerUser() throws SQLException, IOException, ClassNotFoundException{ // Регистрация пользователя
         connectToDB();
 
         if (!isExist()) {
-            try {
-                statement = connection.prepareStatement("INSERT INTO users (login, pass) VALUES (?,?)");  // Регистрация пользователя
-                statement.setString(1,login);
-                statement.setString(2,pass);
-                createFolder();
-                out.writeUTF("/registrationok");
-                setisAUthorizationOK = true;
-            } catch (SQLException | IOException e) {
-                e.printStackTrace();
-            }
-
+            statement = connection.prepareStatement("INSERT INTO users (login, pass) VALUES (?,?)");
+            statement.setString(1,login);
+            statement.setString(2,pass);
+            createFolder();
+            msg.sendMessage("/registrationok");
+            //setisAUthorizationOK = true;
         } else {
-
-            try {
-                out.writeUTF("/loginisoccupied");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            msg.sendMessage("/loginisoccupied");
         }
 
         disconnectWithDB();
     }
 
-    void loginValidation(){
+    void loginValidation() throws SQLException, IOException, ClassNotFoundException{ // Checking if login is valid
         connectToDB();
 
-        try {
-            statement = connection.prepareStatement("SELECT login, pass FROM users where login = ?");
-            statement.setString(1,login);
-            ResultSet result = statement.executeQuery();
+        statement = connection.prepareStatement("SELECT login, pass FROM users where login = ?");
+        statement.setString(1,login);
+        ResultSet result = statement.executeQuery();
 
-            if ((!result.getString(1).equals(login)) || (!result.getString(2).equals(pass))){  // проверка правильности логина и пароля
-                out.writeUTF("/incorrectpass");
-            } else {
-                out.writeUTF("/correctpass");
-                isAUthorizationOK = true;
-            }
-        } catch (SQLException | IOException e) {
-            e.printStackTrace();
+        if ((!result.getString(1).equals(login)) || (!result.getString(2).equals(pass))){  // проверка правильности логина и пароля
+            msg.sendMessage("/incorrectpass");
+        } else {
+            msg.sendMessage("/incorrectpass");
+            //isAUthorizationOK = true;
         }
 
         disconnectWithDB();
     }
 
-    private void createFolder(){
-        new File(storagePath + login + "/").mkdirs();
+    private void createFolder() throws IOException{
+        new Storage().createFolder(login);
     }
 }
