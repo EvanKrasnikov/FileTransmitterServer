@@ -42,7 +42,7 @@ public class Server {
                 if (key.isAcceptable()) {
                     processAcceptEvent(socketChannel, key);
                 } else if (key.isReadable()) {
-                    processReadEvent(key);
+                    processReadEvent(socketChannel, key);
                 }
 
                 i.remove();
@@ -56,12 +56,13 @@ public class Server {
             client.register(selector,SelectionKey.OP_WRITE);
     }
 
-    private static void processReadEvent(SelectionKey key) throws IOException{
+    private static void processReadEvent(ServerSocketChannel socketChannel, SelectionKey key) throws IOException{
         SocketChannel client = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
         client.read(buffer);
         String result = new String(buffer.array()).trim();
 
-        ClientHandler clientHandler = new ClientHandler();
+        ClientHandler clientHandler = new ClientHandler(socketChannel,key);
+        clientHandler.parseMassage(result);
     }
 }
