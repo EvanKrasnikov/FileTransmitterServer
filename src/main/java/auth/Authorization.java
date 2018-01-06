@@ -6,7 +6,7 @@ import storage.Storage;
 import java.io.IOException;
 import java.sql.*;
 
-class Authorization{
+public class Authorization{
     private Connection connection;
     private PreparedStatement statement;
     private final String DATABASE_PATH = "C:/TMP/DB/database.db";
@@ -14,6 +14,7 @@ class Authorization{
     private String login;
     private String pass;
     private Message msg = new Message();
+    public boolean isAuthorizationOk = false;
 
 
     public void setLogin(String login) {
@@ -49,7 +50,7 @@ class Authorization{
         return false;
     }
 
-    void registerUser(){ // Регистрация пользователя
+    public void registerUser(){ // Регистрация пользователя
         try {
             connectToDB();
 
@@ -59,7 +60,7 @@ class Authorization{
                 statement.setString(2,pass);
                 createFolder();
                 msg.sendMessage("/registrationok");
-                //setisAUthorizationOK = true;
+                isAuthorizationOk = true;
             } else {
                 msg.sendMessage("/loginisoccupied");
             }
@@ -76,7 +77,7 @@ class Authorization{
         }
     }
 
-    void loginValidation(){ // Checking if login is valid
+    public void loginValidation(){ // Checking if login is valid
         try {
             connectToDB();
 
@@ -88,7 +89,7 @@ class Authorization{
                 msg.sendMessage("/incorrectpass");
             } else {
                 msg.sendMessage("/incorrectpass");
-                //isAUthorizationOK = true;
+                isAuthorizationOk = true;
             }
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();

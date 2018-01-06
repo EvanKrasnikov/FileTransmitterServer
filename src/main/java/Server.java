@@ -1,35 +1,31 @@
-import auth.ClientHandler;
+import basehandler.BaseHandler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 
 public class Server {
     private final int PORT = 8189;
     private final String HOST_ADRESS = "localhost";
-    private Vector<ClientHandler> clients;
+    //private Vector<AuthHandler> clients;
     //private AuthService authService;
-    private static final int BUFFER_SIZE = 1024;
+    private static final int BUFFER_SIZE = 4096;
     private static Selector selector = null;
 
 
     public Server() throws IOException{
         //authService = null;
-        clients = new Vector<>();
+        //clients = new Vector<>();
         selector = Selector.open();
 
         ServerSocketChannel socketChannel = ServerSocketChannel.open();
-        InetSocketAddress socketAddress = new InetSocketAddress(HOST_ADRESS, PORT);
-
-        socketChannel.bind(socketAddress);
+        socketChannel.bind(new InetSocketAddress(HOST_ADRESS, PORT));
         socketChannel.configureBlocking(false);
 
-        int ops = socketChannel.validOps();
-        socketChannel.register(selector, ops, null);
+        //int ops = socketChannel.validOps();
+        socketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         while (true) {
             selector.select();
@@ -38,22 +34,26 @@ public class Server {
 
             while (i.hasNext()) {
                 SelectionKey key = i.next();
+                i.remove();
 
                 if (key.isAcceptable()) {
-                    processAcceptEvent(socketChannel, key);
-                } else if (key.isReadable()) {
-                    processReadEvent(socketChannel, key);
+                    processAcceptEvent(socketChannel);
+                    continue;
                 }
 
-                i.remove();
+                 if (key.isReadable()) {
+                    processReadEvent(socketChannel, key);
+                    socketChannel.close();
+                    return;
+                }
             }
         }
     }
 
-    private static void processAcceptEvent(ServerSocketChannel socketChannel, SelectionKey key) throws IOException{
+    private static void processAcceptEvent(ServerSocketChannel socketChannel) throws IOException{
             SocketChannel client = socketChannel.accept();
             client.configureBlocking(false);
-            client.register(selector,SelectionKey.OP_WRITE);
+            client.register(selector,SelectionKey.OP_READ);
     }
 
     private static void processReadEvent(ServerSocketChannel socketChannel, SelectionKey key) throws IOException{
@@ -61,8 +61,14 @@ public class Server {
         ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
         client.read(buffer);
         String result = new String(buffer.array()).trim();
+        String[] strings = result.split("\\s");
+        ArrayDeque<String> queue = new ArrayDeque<>();
 
-        ClientHandler clientHandler = new ClientHandler(socketChannel,key);
-        clientHandler.parseMassage(result);
+        for (String s: strings){
+            queue.push(s);
+        }
+
+        BaseHandler authHandler = new BaseHandler(socketChannel,key);
+        authHandler.parseMassage(queue);
     }
 }
