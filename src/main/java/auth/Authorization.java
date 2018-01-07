@@ -1,9 +1,7 @@
 package auth;
 
 import speaker.Message;
-import storage.Storage;
 
-import java.io.IOException;
 import java.sql.*;
 
 public class Authorization{
@@ -15,15 +13,6 @@ public class Authorization{
     private String pass;
     private Message msg = new Message();
     public boolean isAuthorizationOk = false;
-
-
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public void setPass(String pass) {
-        this.pass = pass;
-    }
 
     private void connectToDB() throws ClassNotFoundException, SQLException{ // Подключение к базе данных
         Class.forName("org.sqlite.JDBC");
@@ -38,7 +27,7 @@ public class Authorization{
         connection.close();
     }
 
-    private boolean isExist() throws SQLException, IOException{   // Проверка существования пользователя
+    private boolean isExist() throws SQLException{   // Проверка существования пользователя
         statement = connection.prepareStatement("SELECT count(*) FROM users where login = ?");
         statement.setString(1,login);
         ResultSet result = statement.executeQuery();
@@ -58,7 +47,6 @@ public class Authorization{
                 statement = connection.prepareStatement("INSERT INTO users (login, pass) VALUES (?,?)");
                 statement.setString(1,login);
                 statement.setString(2,pass);
-                createFolder();
                 msg.sendMessage("/registrationok");
                 isAuthorizationOk = true;
             } else {
@@ -66,7 +54,7 @@ public class Authorization{
             }
 
 
-        } catch (ClassNotFoundException | SQLException | IOException e){
+        } catch (ClassNotFoundException | SQLException  e){
             e.printStackTrace();
         } finally {
             try {
@@ -100,9 +88,5 @@ public class Authorization{
                 e.printStackTrace();
             }
         }
-    }
-
-    private void createFolder() throws IOException{
-        new Storage().createFolder(login);
     }
 }

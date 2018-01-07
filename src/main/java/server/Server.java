@@ -1,3 +1,5 @@
+package server;
+
 import basehandler.BaseHandler;
 
 import java.io.IOException;
@@ -6,25 +8,19 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.*;
 
-public class Server {
+class Server {
     private final int PORT = 8189;
     private final String HOST_ADRESS = "localhost";
-    //private Vector<AuthHandler> clients;
-    //private AuthService authService;
     private static final int BUFFER_SIZE = 4096;
     private static Selector selector = null;
 
 
-    public Server() throws IOException{
-        //authService = null;
-        //clients = new Vector<>();
+    Server() throws IOException{
         selector = Selector.open();
 
         ServerSocketChannel socketChannel = ServerSocketChannel.open();
         socketChannel.bind(new InetSocketAddress(HOST_ADRESS, PORT));
         socketChannel.configureBlocking(false);
-
-        //int ops = socketChannel.validOps();
         socketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         while (true) {

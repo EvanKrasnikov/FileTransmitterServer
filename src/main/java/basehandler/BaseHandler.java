@@ -32,7 +32,7 @@ public class BaseHandler {
 
                 if (authorization.isAuthorizationOk){
                     name = login;
-                    storage = new Storage();
+                    storage = new Storage(name);
                 }
             }
 
@@ -41,6 +41,12 @@ public class BaseHandler {
                 pass = queue.pop();
                 authorization = new Authorization();
                 authorization.registerUser();
+
+                if (authorization.isAuthorizationOk){
+                    name = login;
+                    storage = new Storage(name);
+                    storage.createFolder(name);
+                }
             }
 
             case "/add" :{
