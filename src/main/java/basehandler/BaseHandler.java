@@ -5,7 +5,7 @@ import storage.Storage;
 
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
-import java.util.ArrayDeque;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class BaseHandler {
     private ServerSocketChannel socket;
@@ -22,7 +22,7 @@ public class BaseHandler {
         name = "";
     }
 
-    public void parseMassage(ArrayDeque<String> queue){
+    public synchronized void parseMassage(ConcurrentLinkedDeque<String> queue){
         switch (queue.pop()){
             case "/login" :{
                 login = queue.pop();
@@ -36,7 +36,7 @@ public class BaseHandler {
                 }
             }
 
-            case "/register" : {
+            case "/register" :{
                 login = queue.pop();
                 pass = queue.pop();
                 authorization = new Authorization();
@@ -53,8 +53,12 @@ public class BaseHandler {
                 storage.receiveFile(queue);
             }
 
-            case "/remove" : {
+            case "/remove" :{
                 storage.removeFile(queue);
+            }
+
+            case "/getfilelist" :{
+                storage.sendFileList();
             }
         }
     }
