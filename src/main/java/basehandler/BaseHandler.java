@@ -1,7 +1,7 @@
 package basehandler;
 
 import auth.Authorization;
-import auth.Messages;
+import speaker.Messages;
 import storage.Storage;
 
 import java.nio.channels.SelectionKey;

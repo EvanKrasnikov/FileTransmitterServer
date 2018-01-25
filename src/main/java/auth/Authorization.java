@@ -1,8 +1,10 @@
 package auth;
 
 import speaker.Message;
+import speaker.Messages;
 
-public class Authorization implements Messages{
+
+public class Authorization implements Messages {
     private String login;
     private String pass;
     private Message msg = new Message();

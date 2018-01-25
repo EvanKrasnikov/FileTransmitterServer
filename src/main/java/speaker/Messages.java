@@ -1,4 +1,4 @@
-package auth;
+package speaker;
 
 public interface Messages {
     String NO_SUCH_USER = "NO_SUCH_USER";
