@@ -1,13 +1,14 @@
 package basehandler;
 
 import auth.Authorization;
+import auth.Messages;
 import storage.Storage;
 
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class BaseHandler {
+public class BaseHandler implements Messages {
     private ServerSocketChannel socket;
     private SelectionKey key;
     private String name;
@@ -24,7 +25,7 @@ public class BaseHandler {
 
     public synchronized void parseMassage(ConcurrentLinkedDeque<String> queue){
         switch (queue.pop()){
-            case "/login" :{
+            case LOGIN :{
                 login = queue.pop();
                 pass = queue.pop();
                 authorization = new Authorization();
@@ -36,7 +37,7 @@ public class BaseHandler {
                 }
             }
 
-            case "/register" :{
+            case REGISTER :{
                 login = queue.pop();
                 pass = queue.pop();
                 authorization = new Authorization();
@@ -49,15 +50,15 @@ public class BaseHandler {
                 }
             }
 
-            case "/add" :{
+            case ADD :{
                 storage.receiveFile(queue);
             }
 
-            case "/remove" :{
+            case REMOVE :{
                 storage.removeFile(queue);
             }
 
-            case "/getfilelist" :{
+            case GET_LIST :{
                 storage.sendFileList();
             }
         }

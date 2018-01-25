@@ -2,7 +2,7 @@ package auth;
 
 import speaker.Message;
 
-public class Authorization{
+public class Authorization implements Messages{
     private String login;
     private String pass;
     private Message msg = new Message();
@@ -10,7 +10,7 @@ public class Authorization{
     private DataBase dataBase;
 
     private boolean isExist(){   // Проверка существования пользователя
-        if (dataBase.checkLogin(login).equals("0")) msg.sendMessage("/nosuchuser");
+        if (dataBase.checkLogin(login).equals("0")) msg.sendMessage(NO_SUCH_USER);
             else return true;
         return false;
     }
@@ -18,19 +18,19 @@ public class Authorization{
     public void registerUser(){ // Регистрация пользователя
         if (!isExist()) {
             dataBase.registerUser(login,pass);
-            msg.sendMessage("/registrationok");
+            msg.sendMessage(REGISTRATION_COMPLETED);
             isAuthorizationOk = true;
         } else {
-            msg.sendMessage("/loginisoccupied");
+            msg.sendMessage(LOGIN_IS_OCCUPIED);
         }
     }
 
     public void loginValidation(){ // Checking if login is valid
         if (dataBase.getPass(login).equals(pass)){  // проверка правильности логина и пароля
-            msg.sendMessage("/correctpass");
+            msg.sendMessage(CORRECT_PASS);
             isAuthorizationOk = true;
         } else {
-            msg.sendMessage("/incorrectpass");
+            msg.sendMessage(INCORRECT_PASS);
         }
     }
 }
