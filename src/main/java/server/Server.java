@@ -7,6 +7,10 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.*;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 class Server {
     private final int PORT = 8189;
@@ -59,7 +63,7 @@ class Server {
         client.read(buffer);
         String result = new String(buffer.array()).trim();
         String[] strings = result.split("\\s");
-        ArrayDeque<String> queue = new ArrayDeque<>();
+        ConcurrentLinkedDeque<String> queue = new ConcurrentLinkedDeque<>();
 
         for (String s: strings){
             queue.push(s);
