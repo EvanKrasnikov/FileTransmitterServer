@@ -47,9 +47,10 @@ class Server {
     }
 
     private static void processAcceptEvent(ServerSocketChannel socketChannel) throws IOException{
-            SocketChannel client = socketChannel.accept();
-            client.configureBlocking(false);
-            client.register(selector,SelectionKey.OP_READ);
+        SocketChannel client = socketChannel.accept();
+        client.configureBlocking(false);
+        client.register(selector,SelectionKey.OP_READ);
+        System.out.println("Client registered: " + client.getRemoteAddress().toString());
     }
 
     private static void processReadEvent(ServerSocketChannel socketChannel, SelectionKey key) throws IOException{
@@ -66,5 +67,6 @@ class Server {
 
         BaseHandler authHandler = new BaseHandler(socketChannel,key);
         authHandler.parseMassage(queue);
+        System.out.println("Reading message from client: " + client.getRemoteAddress().toString());
     }
 }
