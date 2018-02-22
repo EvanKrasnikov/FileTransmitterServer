@@ -1,4 +1,4 @@
-package speaker;
+package utils;
 
 public interface Messages {
     String NO_SUCH_USER = "NO_SUCH_USER";
@@ -12,6 +12,7 @@ public interface Messages {
     String REMOVE = "REMOVE";
     String LOGIN = "LOGIN";
     String GET_LIST = "GET_LIST";
+    String GET_FILES = "GET_FILES";
 }
 
 
