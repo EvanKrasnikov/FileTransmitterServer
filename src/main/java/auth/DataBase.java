@@ -1,14 +1,16 @@
 package auth;
 
+import utils.Messages;
+
 import java.sql.*;
 
-class DataBase{
-    private Connection connection;
-    private PreparedStatement statement;
-    private final String DATABASE_PATH = "C:/TMP/DB/database.db";
-    private final String PORT = "5050";
+class DataBase implements Messages{
+    private static Connection connection;
+    private static PreparedStatement statement;
+    private static final String DATABASE_PATH = "C:/TMP/DB/database.db";
+    private static final String PORT = "5050";
 
-    private void connectToDB(){ // Подключение к базе данных
+    private synchronized static void connectToDB(){ // Подключение к базе данных
         try {
             Class.forName("org.sqlite.JDBC");
             System.out.println("SQL driver loaded");
@@ -20,7 +22,7 @@ class DataBase{
         }
     }
 
-    private void disconnectWithDB(){ // Отключение от базы данных
+    private synchronized static void disconnectWithDB(){ // Отключение от базы данных
         try {
             statement.close();
             connection.close();
@@ -29,7 +31,7 @@ class DataBase{
         }
     }
 
-    String checkLogin(String login){   // Проверка существования пользователя
+    static synchronized String checkLogin(String login){   // Проверка существования пользователя
         try {
             connectToDB();
             statement = connection.prepareStatement("SELECT count(*) FROM users where login = ?");
@@ -41,10 +43,10 @@ class DataBase{
         } finally {
             disconnectWithDB();
         }
-        return "/failtoconnect";
+        return FAILED_TO_CONNECT;
     }
 
-    void registerUser(String login, String pass){ // Регистрация пользователя
+    static synchronized void registerUser(String login, String pass){ // Регистрация пользователя
         try {
             connectToDB();
             statement = connection.prepareStatement("INSERT INTO users (login, pass) VALUES (?,?)");
@@ -57,7 +59,7 @@ class DataBase{
         }
     }
 
-    String getPass(String login){ // Checking if login is valid
+    static synchronized String getPass(String login){ // Checking if login is valid
         try {
             connectToDB();
             statement = connection.prepareStatement("SELECT pass FROM users where login = ?");
@@ -69,6 +71,6 @@ class DataBase{
         } finally {
             disconnectWithDB();
         }
-        return "/failtoconnect";
+        return FAILED_TO_CONNECT;
     }
 }
