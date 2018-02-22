@@ -1,9 +1,10 @@
-package storage;
+package filemanager;
+
+import server.BaseHandler;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,35 +15,30 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class Storage {
+public class FileManager extends BaseHandler{
     private static final int BUFFER_SIZE = 16384;
-    private String STORAGE_PATH = "/home/user/foo";
-    private String LINUX_DELIMETER = "/";
-    private String name;
-    private ByteChannel channel;
+    private static final String STORAGE_PATH = "/home/user/foo";
+    private static final String LINUX_DELIMETER = "/";
 
-    public Storage(String name){
-        this.name = name;
-    }
-
-    public void createFolder(String username){
+    public static void createFolder(String username){
         try {
             Path path = Paths.get(STORAGE_PATH + LINUX_DELIMETER + username);
             Files.createDirectories(path);
         } catch (IOException e) {
             e.printStackTrace();
+            System.err.println("Can't create folder");
         }
     }
 
-    private String getPath(){
-        return (STORAGE_PATH + LINUX_DELIMETER + this.name + LINUX_DELIMETER);
+    private static String getPath(String username){
+        return (STORAGE_PATH + LINUX_DELIMETER + username + LINUX_DELIMETER);
     }
 
-    public synchronized void receiveFile(ConcurrentLinkedDeque<String> arrayDeque){
+    public static synchronized void receiveFile(String username, ConcurrentLinkedDeque<String> arrayDeque){
         ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
 
         while (!arrayDeque.isEmpty()){
-            Path path = Paths.get(getPath() + arrayDeque.pop());
+            Path path = Paths.get(getPath(username) + arrayDeque.pop());
 
             try {
                 FileChannel fileChannel = FileChannel.open(path,
@@ -60,38 +56,29 @@ public class Storage {
                 fileChannel.close();
             } catch (IOException e) {
                 e.printStackTrace();
+                System.err.println("Can't receive file");
             }
         }
     }
 
-    public synchronized void removeFile(ConcurrentLinkedDeque<String> arrayDeque){
+    public static synchronized void removeFile(String username, ConcurrentLinkedDeque<String> arrayDeque){
         while (!arrayDeque.isEmpty()){
-            Path path = Paths.get(getPath() + arrayDeque.pop());
+            Path path = Paths.get(getPath(username) + arrayDeque.pop());
 
             try {
                 Files.deleteIfExists(path);
             } catch (IOException e) {
                 e.printStackTrace();
+                System.err.println("Can't delete file");
             }
         }
     }
 
-    public void sendFileList(){
-        ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
-        byte[] bytes = getFileList().toString().getBytes();
-        buffer.get(bytes);
-
-        try {
-            channel.write(buffer);
-        } catch (IOException e) {
-            System.err.println("Can't send file list");
-        }
-    }
-
-    private List getFileList(){
-        Path path = Paths.get(STORAGE_PATH + LINUX_DELIMETER + this.name);
+    public static String getFileListAsString(String username){
+        Path path = Paths.get(getPath(username));
         File folder = path.toFile();
         List<String> list = new ArrayList<>();
+        StringBuilder stringBuilder = new StringBuilder();
 
         for (final File file : folder.listFiles()) {
             String name = file.getName();
@@ -100,18 +87,19 @@ public class Storage {
             String size = length.toString();
 
             Long date = file.lastModified();
-            String lastModified = length.toString();
+            String lastModified = date.toString();
 
-            list.add(name + " " + size + " " + lastModified);
+            String entry = name + " " + size + " " + lastModified + "\t";
+            stringBuilder.append(entry);
         }
-        return list;
+        return stringBuilder.toString();
     }
 
-    public synchronized void sendFiles(ConcurrentLinkedDeque<String> arrayDeque){
+    public static synchronized void sendFiles(String username, ConcurrentLinkedDeque<String> arrayDeque){
         ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
 
         while (!arrayDeque.isEmpty()){
-            Path path = Paths.get(getPath() + arrayDeque.pop());
+            Path path = Paths.get(getPath(username) + arrayDeque.pop());
 
             try {
                 FileChannel fileChannel = FileChannel.open(path,StandardOpenOption.READ);
@@ -125,8 +113,8 @@ public class Storage {
                 fileChannel.close();
             } catch (IOException e) {
                 e.printStackTrace();
+                System.err.println("Can't send file");
             }
         }
     }
-
 }
