@@ -1,76 +1,69 @@
 package server;
 
-import basehandler.BaseHandler;
-
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
+import java.net.UnknownHostException;
 import java.nio.channels.*;
 import java.util.*;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-class Server {
-    private final int PORT = 8189;
-    private final String HOST_ADRESS = "localhost";
-    private static final int BUFFER_SIZE = 4096;
-    private static Selector selector = null;
+public class Server {
+    private static Selector selector;
+    private static ServerSocketChannel channel;
+    private static SelectionKey key;
+    static HashMap<SelectionKey, Session> clients = new HashMap<>();
 
+    public static void main(String[] args) throws UnknownHostException {
+        new Server(new InetSocketAddress(InetAddress.getLocalHost(), 1337));
+    }
 
-    Server() throws IOException{
-        selector = Selector.open();
+    public Server(InetSocketAddress address){
+        try {
+            selector = Selector.open();
+            channel = ServerSocketChannel.open();
+            channel.configureBlocking(false);
+            channel.bind(address);
+            channel.register(selector,SelectionKey.OP_ACCEPT);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Fail to initialize connection");
+        }
 
-        ServerSocketChannel socketChannel = ServerSocketChannel.open();
-        socketChannel.bind(new InetSocketAddress(HOST_ADRESS, PORT));
-        socketChannel.configureBlocking(false);
-        socketChannel.register(selector, SelectionKey.OP_ACCEPT);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> loop(), 0, 500, TimeUnit.MILLISECONDS);
+    }
 
-        while (true) {
-            selector.select();
-            Set<SelectionKey> selectedKeys = selector.selectedKeys();
-            Iterator<SelectionKey> i = selectedKeys.iterator();
+    private void loop(){
+        try {
+            selector.selectNow();
 
-            while (i.hasNext()) {
-                SelectionKey key = i.next();
-                i.remove();
+            for (SelectionKey key : selector.selectedKeys()) {
+                if (!key.isValid()) continue;
 
                 if (key.isAcceptable()) {
-                    processAcceptEvent(socketChannel);
-                    continue;
+                    SocketChannel acceptedChannel = channel.accept();
+
+                    if (acceptedChannel == null) continue;
+
+                    acceptedChannel.configureBlocking(false);
+                    SelectionKey readKey = acceptedChannel.register(selector, SelectionKey.OP_READ);
+                    clients.put(readKey, new Session(readKey, acceptedChannel));
+
+                    System.out.println("New client " + acceptedChannel.getRemoteAddress());
                 }
 
-                 if (key.isReadable()) {
-                    processReadEvent(socketChannel, key);
-                    socketChannel.close();
-                    return;
+                if (key.isReadable()) {
+                    Session session = clients.get(key);
+
+                    if (session == null) continue;
+
+                    session.receiveMessage();
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Fail to select key");
         }
-    }
-
-    private static void processAcceptEvent(ServerSocketChannel socketChannel) throws IOException{
-        SocketChannel client = socketChannel.accept();
-        client.configureBlocking(false);
-        client.register(selector,SelectionKey.OP_READ);
-        System.out.println("Client registered: " + client.getRemoteAddress().toString());
-    }
-
-    private static void processReadEvent(ServerSocketChannel socketChannel, SelectionKey key) throws IOException{
-        SocketChannel client = (SocketChannel) key.channel();
-        ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
-        client.read(buffer);
-        String result = new String(buffer.array()).trim();
-        String[] strings = result.split("\\s");
-        ConcurrentLinkedDeque<String> queue = new ConcurrentLinkedDeque<>();
-
-        for (String s: strings){
-            queue.push(s);
-        }
-
-        BaseHandler authHandler = new BaseHandler(socketChannel,key);
-        authHandler.parseMassage(queue);
-        System.out.println("Reading message from client: " + client.getRemoteAddress().toString());
     }
 }
