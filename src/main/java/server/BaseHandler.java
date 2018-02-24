@@ -1,6 +1,7 @@
 package server;
 
 import auth.Authorization;
+import filemanager.FileSync;
 import utils.Messages;
 import filemanager.FileManager;
 
@@ -35,13 +36,13 @@ public class BaseHandler implements Messages {
                 }
             }
 
-            case ADD : FileManager.receiveFile(name,queue);
+            case ADD : FileSync.receiveFile(name,queue);
 
             case REMOVE : FileManager.removeFile(name,queue);
 
-            case GET_LIST : session.sendMessage(FileManager.getFileListAsString(name));
+            case GET_LIST : session.sendMessage(FileManager.getFileListAsString(name).getBytes());
 
-            case GET_FILES : FileManager.sendFiles(name,queue);
+            case GET_FILES : new FileSync(session).sendFiles(name,queue);
         }
     }
 }

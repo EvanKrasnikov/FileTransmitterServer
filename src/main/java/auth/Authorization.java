@@ -11,7 +11,7 @@ public class Authorization implements Messages, Sendable {
     }
 
     private synchronized boolean isExist(String login){   // Проверка существования пользователя
-        if (DataBase.checkLogin(login).equals("0")) sendMessage(NO_SUCH_USER);
+        if (DataBase.checkLogin(login).equals("0")) sendMessage(NO_SUCH_USER.getBytes());
             else return true;
         return false;
     }
@@ -19,26 +19,26 @@ public class Authorization implements Messages, Sendable {
     public synchronized boolean registerUser(String login, String pass){ // Регистрация пользователя
         if (!isExist(login)) {
             DataBase.registerUser(login,pass);
-            sendMessage(REGISTRATION_COMPLETED);
+            sendMessage(REGISTRATION_COMPLETED.getBytes());
             return true;
         } else {
-            sendMessage(LOGIN_IS_OCCUPIED);
+            sendMessage(LOGIN_IS_OCCUPIED.getBytes());
             return false;
         }
     }
 
     public synchronized boolean validateLogin(String login, String pass){ // Checking if login is valid
         if (DataBase.getPass(login).equals(pass)){  // проверка правильности логина и пароля
-            sendMessage(CORRECT_PASS);
+            sendMessage(CORRECT_PASS.getBytes());
             return true;
         } else {
-            sendMessage(INCORRECT_PASS);
+            sendMessage(INCORRECT_PASS.getBytes());
             return false;
         }
     }
 
     @Override
-    public void sendMessage(String message) {
-        sender.sendMessage(message);
+    public void sendMessage(byte[] bytes) {
+        sender.sendMessage(bytes);
     }
 }
