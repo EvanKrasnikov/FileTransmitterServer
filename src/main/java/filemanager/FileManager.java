@@ -1,7 +1,5 @@
 package filemanager;
 
-import server.BaseHandler;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -15,12 +13,12 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class FileManager extends BaseHandler{
+public class FileManager{
     private static final int BUFFER_SIZE = 16384;
     private static final String STORAGE_PATH = "/home/user/foo";
     private static final String LINUX_DELIMETER = "/";
 
-    public static void createFolder(String username){
+    public static synchronized void createFolder(String username){
         try {
             Path path = Paths.get(STORAGE_PATH + LINUX_DELIMETER + username);
             Files.createDirectories(path);
@@ -30,7 +28,7 @@ public class FileManager extends BaseHandler{
         }
     }
 
-    private static String getPath(String username){
+    private static synchronized String getPath(String username){
         return (STORAGE_PATH + LINUX_DELIMETER + username + LINUX_DELIMETER);
     }
 
@@ -74,7 +72,7 @@ public class FileManager extends BaseHandler{
         }
     }
 
-    public static String getFileListAsString(String username){
+    public static synchronized String getFileListAsString(String username){
         Path path = Paths.get(getPath(username));
         File folder = path.toFile();
         List<String> list = new ArrayList<>();
