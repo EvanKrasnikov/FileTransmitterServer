@@ -59,9 +59,8 @@ public class Session implements Sendable{
         }
     }
 
-    public void sendMessage(String msg){
+    public void sendMessage(byte[] bytes){
         ByteBuffer buffer;
-        byte[] bytes = msg.getBytes();
 
         try {
             buffer = ByteBuffer.allocate(BUFFER_SIZE);
@@ -71,5 +70,9 @@ public class Session implements Sendable{
             e.printStackTrace();
             System.err.println("Failed to send message");
         }
+    }
+
+    public SocketChannel getChannel() {
+        return channel;
     }
 }
