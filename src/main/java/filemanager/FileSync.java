@@ -2,6 +2,7 @@ package filemanager;
 
 import server.Sendable;
 import server.Session;
+import utils.Messages;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -52,6 +53,16 @@ public class FileSync implements Sendable{
 
         while (!arrayDeque.isEmpty()){
             Path path = Paths.get(FileManager.getPath(username) + arrayDeque.pop());
+
+            buffer.get((Messages.FILE + " " + path.getName(0)).getBytes());
+            try {
+                session.getChannel().write(buffer);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("Can't send header");
+            } finally {
+                buffer.clear();
+            }
 
             try {
                 FileChannel fileChannel = FileChannel.open(path,StandardOpenOption.READ);
