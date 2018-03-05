@@ -16,6 +16,7 @@ public interface Messages {
     String GET_LIST = "GET_LIST";
     String GET_FILES = "GET_FILES";
     String TRANSITION_COMPLETE = "TRANSITION_COMPLETE";
+    String FILE = "FILE";
 }
 
 
